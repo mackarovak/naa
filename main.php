@@ -3,8 +3,8 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-$page_title = "Салон красоты";
-$site_title = "Добро пожаловать в салон красоты!";
+$page_title = "Интернет магазин электроники";
+$site_title = "Добро пожаловать в Интернет магазин электроники!";
 
 ob_start();
 
