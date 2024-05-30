@@ -44,17 +44,13 @@ $sql = "CREATE TABLE IF NOT EXISTS users (
 )";
 $conn->query($sql);
 
-$search_query = isset($_GET['search']) ? $_GET['search'] : '';
-
-// Создание таблицы "orders" (замените поля на необходимые)
-$create_orders_table = "CREATE TABLE orders (
+$create_carts_table = "CREATE TABLE IF NOT EXISTS carts (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(50) NOT NULL,
     product_name VARCHAR(255) NOT NULL,
-    price DECIMAL(10,2) NOT NULL,
-    customer_name VARCHAR(255) NOT NULL,
-    customer_email VARCHAR(255) NOT NULL
+    price DECIMAL(10,2) NOT NULL
 )";
-$conn->query($create_orders_table);
+$conn->query($create_carts_table);
 
 $sql = "SELECT COUNT(*) as count FROM products";
 $result = $conn->query($sql);
@@ -89,74 +85,71 @@ if (isset($_GET['search']) && $_GET['search'] != '') {
 
 $result = $conn->query($sql);
 ?>
-<style>
-    .pink-button {
-        padding: 10px 20px;
-        margin-top: 10px; /* Отступ над кнопкой */
-        border: none;
-        border-radius: 5px;
-        background-color: #808080; /* Цвет кнопки */
-        color: #fff;
-        font-weight: bold;
-        cursor: pointer;
-    }
-</style>
 
-
-
-<div class='menu'>
-    <div>
-        <form method='GET'>
-            <select name='description'>
-                <option value=''>Выберите категорию</option>
-                <option value='Смартфоны'>Смартфоны</option>
-                <option value='Ноутбуки'>Ноутбуки</option>
-                <option value='Мышки'>Мышки</option>
-                <option value='Планшеты'>Планшеты</option>
-            </select>
-            <input type='text' name='search' placeholder='Поиск по имени'>
-            <input type='submit'class='button' value='Применить фильтр и поиск'>
-            <a href='cart.php'>Корзина</a>
-        </form>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title><?php echo $page_title; ?></title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class='menu'>
+        <div>
+            <form method='GET'>
+                <select name='description'>
+                    <option value=''>Выберите категорию</option>
+                    <option value='Смартфоны'>Смартфоны</option>
+                    <option value='Ноутбуки'>Ноутбуки</option>
+                    <option value='Мышки'>Мышки</option>
+                    <option value='Планшеты'>Планшеты</option>
+                </select>
+                <input type='text' name='search' placeholder='Поиск по имени'>
+                <input type='submit' class='button' value='Применить фильтр и поиск'>
+                <a href='cart.php'>Корзина</a>
+            </form>
+        </div>
     </div>
-</div>
 
-<div class='container'>
-    <?php
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            echo "<div class='product'>";
-            echo "<div class='product-info'>";
-            echo "<h2>" . $row["name"] . "</h2>";
-            echo "<p>" . $row["description"] . "</p>";
-            echo "<p class='price'>Цена: $" . $row["price"] . "</p>";
-            echo "<button class='pink-button' onclick='addToCart(" . $row["id"] . ", \"" . $row["name"] . "\", " . $row["price"] . ")'>Купить</button>";            echo "</div>";
-            echo "<div class='product-image'>";
-            echo "<img src='images/" . $row["image_path"] . "' alt='" . $row["name"] . "'>";
-            echo "</div>";
-            echo "</div>";
+    <div class='container'>
+        <?php
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                echo "<div class='product'>";
+                echo "<div class='product-info'>";
+                echo "<h2>" . $row["name"] . "</h2>";
+                echo "<p>" . $row["description"] . "</p>";
+                echo "<p class='price'>Цена: $" . $row["price"] . "</p>";
+                echo "<button class='pink-button' onclick='addToCart(" . $row["id"] . ", \"" . $row["name"] . "\", " . $row["price"] . ")'>Купить</button>";
+                echo "</div>";
+                echo "<div class='product-image'>";
+                echo "<img src='images/" . $row["image_path"] . "' alt='" . $row["name"] . "'>";
+                echo "</div>";
+                echo "</div>";
+            }
+        } else {
+            echo "Нет доступных товаров";
         }
-    } else {
-        echo "Нет доступных товаров";
-    }
-    ?>
-</div>
+        ?>
+    </div>
 
-<script>
-function addToCart(productId, productName, productPrice) {
-    fetch('add_to_cart.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({id: productId, name: productName, price: productPrice})
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.message);
-    });
-}
-</script>
+    <script>
+        function addToCart(id, name, price) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "add_to_cart.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        console.log("Товар добавлен в корзину");
+                    } else {
+                        console.error("Произошла ошибка при добавлении товара в корзину");
+                    }
+                }
+            };
+            xhr.send("id=" + id + "&name=" + name + "&price=" + price);
+        }
+    </script>
 
 <?php
 $body_content = ob_get_clean();

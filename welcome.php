@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Подключение к базе данных
 $servername = "mysql";
 $username = "nuancce";
 $password = "1";
@@ -16,10 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_password'])) {
     $newPassword = $_POST['new_password'];
     $username = $_SESSION['username'];
 
-    // Хэширование нового пароля
     $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-
-    // Обновление пароля в базе данных
     $sql = "UPDATE users SET password='$hashedPassword' WHERE username='$username'";
     if ($conn->query($sql) === TRUE) {
         $message = "Пароль успешно изменен!";
@@ -35,8 +31,14 @@ if (isset($_POST['logout'])) {
     exit;
 }
 
+// Запрос для получения заказов пользователя
+$userId = $_SESSION['username'];
+$ordersSql = "SELECT * FROM orders WHERE user_id = '$userId'";
+$ordersResult = $conn->query($ordersSql);
+
 ob_start();
 ?>
+
 <style>
      body {
         margin: 0;
@@ -47,7 +49,7 @@ ob_start();
     .center {
         display: flex;
         justify-content: center;
-        align-items: flex-start; /* Изменено на flex-start */
+        align-items: flex-start; 
         height: 100vh;
     }
 
@@ -56,9 +58,9 @@ ob_start();
         padding: 30px;
         border: 1px solid #ccc;
         border-radius: 5px;
-        background-color: #FFF; /* Белый фон */
+        background-color: #FFF;
         text-align: center;
-        margin-top: 20px; /* Уменьшенный отступ сверху */
+        margin-top: 20px; 
     }
 
     .register-form input[type="password"] {
@@ -93,6 +95,18 @@ ob_start();
         <form method='POST'>
             <button type='submit' name='logout'>Выход</button>
         </form>
+        <h3>Ваши заказы:</h3>
+        <ul>
+            <?php
+            if ($ordersResult->num_rows > 0) {
+                while ($order = $ordersResult->fetch_assoc()) {
+                    echo "<li> " . $order['product_name'] . " (Цена: " . $order['price'] . ")</li>";
+                }
+            } else {
+                echo "<p>У вас пока нет заказов.</p>";
+            }
+            ?>
+        </ul>
         <p style='color: #E4717A;'><?php if(isset($message)) { echo $message; } ?></p>
     </div>
 </div>
